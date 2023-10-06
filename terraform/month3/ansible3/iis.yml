@@ -1,0 +1,72 @@
+---
+- name: Install and Configure IIS
+  hosts: all
+  gather_facts: true
+ 
+  vars:
+    my_distribution: 'Microsoft Windows Server 2019 Datacenter'
+    your_name: 'Rahul Surjani'
+ 
+  tasks:
+    - name: Install and configure IIS
+      when: (ansible_facts['distribution'] == my_distribution)
+      block:
+        - name: Install IIS
+          ansible.windows.win_feature:
+            name: "{{ item }}"
+            state: present
+          with_items:
+            - Web-Server
+            - Web-Mgmt-Console
+            - Web-Mgmt-Tools
+            - Web-Static-Content
+          notify: IIS_running
+          tags:
+            - install
+ 
+        - name: Create Folders
+          ansible.windows.win_file:
+            path: "{{ item }}"
+            state: directory
+          loop:
+            - C:\\Inetpub\wwwroot\folder1
+            - C:\\Inetpub\wwwroot\folder2
+            - C:\\Inetpub\wwwroot\folder3
+          register:
+            folder_creation
+          tags:
+            - folders
+            - pages
+ 
+        - name: Remove Default Site
+          community.windows.win_iis_website:
+            name: 'Default Web Site'
+            state: absent
+ 
+        - name: Copy Index Page to web server
+          ansible.windows.win_template:
+            src: templates/month-3.html.j2
+            dest: C:\Inetpub\{{ item }}\index.html
+          with_items:
+            - wwwroot
+            - wwwroot\folder1
+            - wwwroot\folder2
+            - wwwroot\folder3
+          tags:
+            - pages
+ 
+        - name: Configure site
+          community.windows.win_iis_website:
+            name: 'Ansible Lab Month-3'
+            physical_path: 'C:\inetpub\wwwroot'
+            state: started
+            port: 80
+            ssl: true
+          notify: IIS_running
+      # end ansible_distribution block
+ 
+  handlers:
+    - name: IIS_running
+      ansible.windows.win_service:
+        name: W3Svc
+        state: started
