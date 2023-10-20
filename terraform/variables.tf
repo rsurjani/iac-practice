@@ -6,7 +6,7 @@ variable "rg_location" {
   
 variable "app_name" {
   type        = string
-  description = "Name of the Application"
+  description = "Name of the Application."
   default     = "rahul"
 }
  
