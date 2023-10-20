@@ -27,7 +27,7 @@ jobs:
     defaults:
       run:
         # Set our default working directory, which is where our TF files are
-        working-directory: ./Terraform
+        working-directory: ./terraform/month3
  
     steps:
       # Check out the code, which copies it locally
