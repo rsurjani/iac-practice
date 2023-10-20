@@ -7,9 +7,11 @@ variable "rg_location" {
 variable "app_name" {
   type        = string
   description = "Name of the Application."
+  default     = "rahul"
 }
  
 variable "vm_name" {
   type        = string
   description = "Name of the Virtual Machine."
+  default     = "rahul"
 }
