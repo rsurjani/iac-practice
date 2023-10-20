@@ -1,0 +1,66 @@
+name: CI/CD
+ 
+# Control what events trigger this workflow
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+ 
+# Set our environment variables to allow Terraform to authenticate
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+ 
+jobs:
+  terraformDeploy:
+    # If the triggering event is a PR, a push, or a workflow dispatch (manual trigger)
+    if: ${{ ( (github.event_name == 'pull_request') || (github.event_name == 'push') || (github.event_name == 'workflow_dispatch') ) }}
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+ 
+    defaults:
+      run:
+        # Set our default working directory, which is where our TF files are
+        working-directory: ./Terraform
+ 
+    steps:
+      # Check out the code, which copies it locally
+      - uses: actions/checkout@v3
+ 
+      # Setup Terraform
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.5
+ 
+      # Initialize Terraform
+      - name: Terraform Init
+        id: init
+        run: terraform init
+ 
+      # Pre-run validation
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+ 
+      # Run a Terraform plan
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -input=false -no-color -out plan.tfplan
+        continue-on-error: false
+ 
+      # Run a Terraform Apply, but only if it is a push to main
+      #- name: Terraform Apply
+      #  if: ${{ ( (github.ref == 'refs/heads/main') && (github.event_name == 'push') ) || ( (github.ref == 'refs/heads/main') && (github.event_name == 'workflow_dispatch') ) }}
+      #  id: apply
+      #  run: terraform apply -input=false -auto-approve plan.tfplan
+ 
+      # Output the Terraform outputs
+      - name: Terraform Output
+        id: output
+        run: terraform output
