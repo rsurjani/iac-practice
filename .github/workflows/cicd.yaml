@@ -64,3 +64,8 @@ jobs:
       - name: Terraform Output
         id: output
         run: terraform output
+
+      # destroy the Terraform outputs
+      - name: Terraform destroy
+        id: destroy
+        run: terraform destroy
